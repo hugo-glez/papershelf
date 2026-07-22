@@ -1,0 +1,558 @@
+# Proyecto
+
+Quiero desarrollar una aplicación Android nativa para uso personal llamada "PaperShelf".
+
+La filosofía del proyecto es:
+
+- 100% offline.
+- Sin anuncios.
+- Sin cuentas.
+- Sin internet.
+- Sin telemetría.
+- Sin suscripciones.
+- Extremadamente rápida.
+- Interfaz minimalista.
+- Optimizada para tablets Android viejas (Android 11 con hardware MediaTek modesto).
+
+NO quiero competir con Kindle.
+NO quiero competir con Adobe Reader.
+
+Quiero una aplicación similar a un Kindle completamente local.
+
+El objetivo principal es que abrir un libro sea instantáneo.
+
+------------------------------------------------------------
+Contexto del dispositivo objetivo
+------------------------------------------------------------
+
+Android 11
+
+CPU:
+MediaTek MT6762
+4x Cortex A53
+
+RAM:
+4 GB
+
+GPU:
+Mali T720
+
+La aplicación debe consumir poca memoria.
+
+Debe poder mantener miles de libros indexados.
+
+------------------------------------------------------------
+Tecnologías requeridas
+------------------------------------------------------------
+
+Lenguaje:
+Kotlin
+
+UI:
+Jetpack Compose
+
+Arquitectura:
+MVVM
+
+Persistencia:
+Room
+
+Inyección de dependencias:
+Hilt
+
+Coroutines + Flow
+
+Min SDK:
+Android 11
+
+Target:
+Última versión estable.
+
+------------------------------------------------------------
+Librerías
+------------------------------------------------------------
+
+PDF
+
+Usar MuPDF SDK
+(o Pdfium si MuPDF presenta problemas de licencia)
+
+EPUB
+
+Usar una librería estable para EPUB.
+
+NO implementar un parser propio.
+
+------------------------------------------------------------
+Arquitectura del proyecto
+------------------------------------------------------------
+
+Quiero un proyecto limpio dividido en módulos.
+
+app
+
+core
+
+data
+
+domain
+
+reader
+
+library
+
+database
+
+settings
+
+Cada módulo debe tener responsabilidades claras.
+
+No colocar toda la lógica en Activities.
+
+------------------------------------------------------------
+Funciones principales
+------------------------------------------------------------
+
+### Biblioteca
+
+Al iniciar:
+
+Escanear una carpeta configurable.
+
+Por defecto
+
+/storage/emulated/0/Books
+
+Buscar
+
+*.pdf
+
+*.epub
+
+Indexar automáticamente.
+
+Guardar en Room.
+
+La biblioteca debe mostrar:
+
+Portada
+
+Título
+
+Autor
+
+Formato
+
+Número de páginas
+
+Última lectura
+
+Progreso
+
+Favorito
+
+------------------------------------------------------------
+
+Si un archivo desaparece:
+
+Marcarlo como no disponible.
+
+NO eliminar automáticamente.
+
+------------------------------------------------------------
+
+Si aparece un archivo nuevo:
+
+Agregarlo automáticamente.
+
+------------------------------------------------------------
+
+Escaneo incremental.
+
+No volver a indexar toda la biblioteca.
+
+------------------------------------------------------------
+Portadas
+------------------------------------------------------------
+
+EPUB
+
+Extraer portada.
+
+PDF
+
+Renderizar primera página.
+
+Guardar thumbnail en caché.
+
+No volver a renderizar si ya existe.
+
+------------------------------------------------------------
+Lector PDF
+------------------------------------------------------------
+
+Debe permitir:
+
+Zoom
+
+Doble toque
+
+Scroll vertical
+
+Scroll horizontal
+
+Modo pantalla completa
+
+Recordar última página.
+
+Marcadores.
+
+------------------------------------------------------------
+Lector EPUB
+------------------------------------------------------------
+
+Modo libro.
+
+Cambio de página.
+
+Modo scroll.
+
+Cambiar tamaño de letra.
+
+Cambiar fuente.
+
+Cambiar márgenes.
+
+Cambiar interlineado.
+
+Modo oscuro.
+
+------------------------------------------------------------
+Marcadores
+------------------------------------------------------------
+
+Cada marcador guarda:
+
+Libro
+
+Página
+
+Capítulo
+
+Nota opcional
+
+Fecha
+
+------------------------------------------------------------
+Progreso
+------------------------------------------------------------
+
+Guardar automáticamente:
+
+Última página
+
+Última apertura
+
+Tiempo de lectura
+
+Porcentaje leído
+
+------------------------------------------------------------
+Favoritos
+------------------------------------------------------------
+
+Permitir marcar libros favoritos.
+
+------------------------------------------------------------
+Búsqueda
+------------------------------------------------------------
+
+Buscar por:
+
+Título
+
+Autor
+
+Nombre del archivo
+
+------------------------------------------------------------
+Filtros
+------------------------------------------------------------
+
+Todos
+
+PDF
+
+EPUB
+
+Favoritos
+
+Leídos
+
+No iniciados
+
+En progreso
+
+------------------------------------------------------------
+Ordenamientos
+------------------------------------------------------------
+
+Nombre
+
+Autor
+
+Fecha agregada
+
+Última lectura
+
+Progreso
+
+------------------------------------------------------------
+Estadísticas
+------------------------------------------------------------
+
+Mostrar:
+
+Cantidad de libros
+
+PDF
+
+EPUB
+
+Páginas leídas
+
+Tiempo de lectura
+
+Libros terminados
+
+Libros iniciados
+
+------------------------------------------------------------
+Configuración
+------------------------------------------------------------
+
+Seleccionar carpeta.
+
+Tema:
+
+Claro
+
+Oscuro
+
+Sistema
+
+Animaciones:
+
+Activadas
+
+Desactivadas
+
+Tamaño miniaturas.
+
+------------------------------------------------------------
+Rendimiento
+------------------------------------------------------------
+
+Prioridad absoluta.
+
+Nunca bloquear el hilo principal.
+
+Todo el escaneo debe hacerse en background.
+
+Usar Coroutines.
+
+Usar caché.
+
+Usar LazyColumn.
+
+Evitar recomposiciones innecesarias.
+
+No usar objetos pesados.
+
+------------------------------------------------------------
+Consumo de batería
+------------------------------------------------------------
+
+No ejecutar servicios permanentes.
+
+No usar WorkManager innecesariamente.
+
+Escanear solamente:
+
+Al abrir la aplicación.
+
+Cuando el usuario lo solicite.
+
+------------------------------------------------------------
+Diseño
+------------------------------------------------------------
+
+Inspiración:
+
+Kindle
+
+KOReader
+
+Material Design 3
+
+Pero mucho más minimalista.
+
+Mucho espacio en blanco.
+
+Animaciones suaves.
+
+Nada de efectos innecesarios.
+
+------------------------------------------------------------
+Pantallas
+------------------------------------------------------------
+
+Home
+
+Biblioteca
+
+Favoritos
+
+Estadísticas
+
+Configuración
+
+Lector
+
+Información del libro
+
+------------------------------------------------------------
+Información del libro
+------------------------------------------------------------
+
+Mostrar
+
+Portada
+
+Título
+
+Autor
+
+Formato
+
+Ruta
+
+Peso
+
+Número de páginas
+
+Fecha agregada
+
+Última lectura
+
+Progreso
+
+------------------------------------------------------------
+Base de datos
+------------------------------------------------------------
+
+Diseñar entidades completas para:
+
+Book
+
+Bookmark
+
+ReadingProgress
+
+Settings
+
+ReadingSession
+
+------------------------------------------------------------
+Calidad del código
+------------------------------------------------------------
+
+Seguir SOLID.
+
+Seguir Clean Architecture.
+
+Separar UI de lógica.
+
+Evitar clases gigantes.
+
+Documentar funciones públicas.
+
+Usar nombres claros.
+
+------------------------------------------------------------
+Pruebas
+------------------------------------------------------------
+
+Agregar pruebas unitarias para:
+
+Scanner
+
+Repositorio
+
+Base de datos
+
+Cálculo de progreso
+
+------------------------------------------------------------
+Salida esperada
+------------------------------------------------------------
+
+Generar un proyecto Android Studio completamente funcional.
+
+Debe compilar sin errores.
+
+No usar pseudocódigo.
+
+No omitir archivos importantes.
+
+Generar:
+
+build.gradle
+
+libs.versions.toml
+
+Manifest
+
+Room
+
+Compose
+
+Hilt
+
+ViewModels
+
+Repositories
+
+DAOs
+
+Entities
+
+Navigation
+
+Tema
+
+Pantallas
+
+Componentes reutilizables
+
+Lógica de escaneo
+
+Persistencia
+
+Lector PDF
+
+Lector EPUB
+
+Todo listo para abrir en Android Studio.
+
+Si la respuesta es demasiado larga:
+
+Generar el proyecto por etapas.
+
+Primero generar únicamente la estructura completa del proyecto.
+
+Después generar módulo por módulo.
+
+Nunca simplificar la arquitectura por ahorrar tokens.
+
+Siempre priorizar un diseño limpio y escalable.
