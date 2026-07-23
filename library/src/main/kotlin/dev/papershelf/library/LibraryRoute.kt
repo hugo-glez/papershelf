@@ -356,7 +356,7 @@ private fun BookRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
-                enabled = book.isAvailable && book.format == BookFormat.Pdf,
+                enabled = book.isAvailable,
                 onClick = { onOpenBook(book) },
             ),
         shape = RoundedCornerShape(8.dp),

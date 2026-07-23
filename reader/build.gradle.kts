@@ -29,10 +29,13 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
     implementation(libs.compose.runtime)
+    implementation(libs.coroutines.android)
     implementation(libs.hilt.android)
     implementation(libs.mupdf.viewer)
     implementation(libs.readium.navigator)
