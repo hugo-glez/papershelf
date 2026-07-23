@@ -39,12 +39,10 @@ class FileSystemLibraryScanner @Inject constructor(
                     if (existing == null) {
                         bookDao.insertBook(scannedFile.toEntity(scannedAt))
                         added += 1
-                    } else {
+                    } else if (existing.needsRefreshFrom(scannedFile)) {
                         val refreshed = existing.refreshFrom(scannedFile, scannedAt)
-                        if (refreshed != existing) {
-                            bookDao.updateBook(refreshed)
-                            updated += 1
-                        }
+                        bookDao.updateBook(refreshed)
+                        updated += 1
                     }
                 }
 
@@ -114,6 +112,15 @@ class FileSystemLibraryScanner @Inject constructor(
             lastScannedEpochMillis = scannedAt,
             isAvailable = true,
         )
+
+    private fun BookEntity.needsRefreshFrom(scannedFile: ScannedBookFile): Boolean =
+        !isAvailable ||
+            title != scannedFile.title ||
+            author == null && scannedFile.author != null ||
+            format != scannedFile.format ||
+            fileName != scannedFile.fileName ||
+            fileSizeBytes != scannedFile.fileSizeBytes ||
+            lastModifiedEpochMillis != scannedFile.lastModifiedEpochMillis
 
     private fun String.isUnder(root: File): Boolean {
         val rootPath = root.absolutePath.trimEnd(File.separatorChar)

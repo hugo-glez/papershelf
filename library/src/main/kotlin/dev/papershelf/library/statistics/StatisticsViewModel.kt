@@ -1,16 +1,16 @@
 package dev.papershelf.library.statistics
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.papershelf.domain.model.Book
-import dev.papershelf.domain.model.BookFormat
 import dev.papershelf.domain.repository.BookRepository
+import dev.papershelf.domain.statistics.LibraryStatistics
+import dev.papershelf.domain.statistics.LibraryStatisticsCalculator
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import androidx.lifecycle.viewModelScope
 
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
@@ -18,30 +18,27 @@ class StatisticsViewModel @Inject constructor(
 ) : ViewModel() {
     val uiState: StateFlow<StatisticsUiState> =
         bookRepository.observeBooks()
-            .map { books -> books.toStatistics() }
+            .map { books -> LibraryStatisticsCalculator.fromBooks(books).toUiState() }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = StatisticsUiState(),
             )
 
-    private fun List<Book>.toStatistics(): StatisticsUiState {
-        val started = count { it.progressPercent > 0f }
-        val finished = count { it.progressPercent >= 100f }
-        return StatisticsUiState(
-            totalBooks = size,
-            pdfBooks = count { it.format == BookFormat.Pdf },
-            epubBooks = count { it.format == BookFormat.Epub },
-            availableBooks = count { it.isAvailable },
-            unavailableBooks = count { !it.isAvailable },
-            startedBooks = started,
-            finishedBooks = finished,
-            notStartedBooks = size - started,
-            averageProgress = if (isEmpty()) 0f else sumOf { it.progressPercent.toDouble() }.toFloat() / size,
-            favorites = count { it.isFavorite },
-            pagesKnown = mapNotNull { it.pageCount }.sum(),
+    private fun LibraryStatistics.toUiState(): StatisticsUiState =
+        StatisticsUiState(
+            totalBooks = totalBooks,
+            pdfBooks = pdfBooks,
+            epubBooks = epubBooks,
+            availableBooks = availableBooks,
+            unavailableBooks = unavailableBooks,
+            startedBooks = startedBooks,
+            finishedBooks = finishedBooks,
+            notStartedBooks = notStartedBooks,
+            averageProgress = averageProgress,
+            favorites = favorites,
+            pagesKnown = pagesKnown,
         )
-    }
 }
 
 data class StatisticsUiState(

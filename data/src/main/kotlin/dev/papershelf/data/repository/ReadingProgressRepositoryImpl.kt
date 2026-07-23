@@ -7,6 +7,7 @@ import dev.papershelf.database.dao.BookDao
 import dev.papershelf.database.dao.ReadingProgressDao
 import dev.papershelf.database.entity.ReadingProgressEntity
 import dev.papershelf.domain.model.ReadingProgress
+import dev.papershelf.domain.progress.ReadingProgressCalculator
 import dev.papershelf.domain.repository.ReadingProgressRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +29,7 @@ class ReadingProgressRepositoryImpl @Inject constructor(
         readingTimeMillis: Long,
     ) {
         val now = System.currentTimeMillis()
-        val boundedPercent = percentRead.coerceIn(0f, 100f)
+        val boundedPercent = ReadingProgressCalculator.bound(percentRead)
         database.withTransaction {
             readingProgressDao.upsertProgress(
                 ReadingProgressEntity(

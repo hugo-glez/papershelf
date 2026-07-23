@@ -9,6 +9,7 @@ import android.widget.Toast
 import com.artifex.mupdf.viewer.DocumentActivity
 import com.artifex.mupdf.viewer.ReaderView
 import dagger.hilt.android.EntryPointAccessors
+import dev.papershelf.domain.progress.ReadingProgressCalculator
 import dev.papershelf.domain.repository.BookmarkRepository
 import dev.papershelf.domain.repository.ReadingProgressRepository
 import dev.papershelf.reader.di.ReaderEntryPoint
@@ -91,11 +92,7 @@ class PaperShelfPdfActivity : DocumentActivity() {
         val currentPage = currentPage()
         if (bookId <= 0 || currentPage == null) return
 
-        val percent = if (pageCount > 0) {
-            ((currentPage + 1).toFloat() / pageCount.toFloat()) * 100f
-        } else {
-            0f
-        }
+        val percent = ReadingProgressCalculator.fromPage(currentPage, pageCount)
 
         scope.launch {
             readingProgressRepository.saveProgress(

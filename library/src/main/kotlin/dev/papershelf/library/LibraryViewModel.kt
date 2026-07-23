@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.papershelf.domain.model.Book
 import dev.papershelf.domain.model.BookFormat
 import dev.papershelf.domain.repository.BookRepository
+import dev.papershelf.domain.repository.SettingsRepository
 import dev.papershelf.domain.scanner.LibraryScanResult
 import dev.papershelf.domain.scanner.LibraryScanner
 import javax.inject.Inject
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -21,6 +23,7 @@ import kotlinx.coroutines.launch
 class LibraryViewModel @Inject constructor(
     bookRepository: BookRepository,
     private val libraryScanner: LibraryScanner,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
     private val controls = MutableStateFlow(LibraryControls())
     private val scanState = MutableStateFlow(LibraryScanState())
@@ -66,7 +69,10 @@ class LibraryViewModel @Inject constructor(
 
         viewModelScope.launch {
             scanState.value = LibraryScanState(isScanning = true)
-            runCatching { libraryScanner.scan() }
+            runCatching {
+                val folderPath = settingsRepository.observeSettings().first().booksFolderPath
+                libraryScanner.scan(folderPath)
+            }
                 .onSuccess { result ->
                     scanState.value = LibraryScanState(lastScanResult = result)
                 }
