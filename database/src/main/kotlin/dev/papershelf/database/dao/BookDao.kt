@@ -25,6 +25,9 @@ interface BookDao {
     @Update
     suspend fun updateBook(book: BookEntity)
 
+    @Query("UPDATE books SET isFavorite = :isFavorite WHERE id = :bookId")
+    suspend fun updateFavorite(bookId: Long, isFavorite: Boolean)
+
     @Query(
         """
         UPDATE books
@@ -36,6 +39,9 @@ interface BookDao {
 
     @Query("SELECT COUNT(*) FROM books")
     suspend fun countBooks(): Int
+
+    @Query("DELETE FROM books")
+    suspend fun deleteAllBooks()
 
     @Query(
         """

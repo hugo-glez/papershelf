@@ -9,9 +9,14 @@ class BookFileMetadataReader @Inject constructor(
 ) {
     fun read(file: File): ScannedBookFile? {
         val format = file.bookFormat() ?: return null
+        val epubMetadata = if (format == BookFormatEntity.Epub) {
+            EpubMetadataReader().read(file)
+        } else {
+            null
+        }
         return ScannedBookFile(
-            title = file.nameWithoutExtension.ifBlank { file.name },
-            author = null,
+            title = epubMetadata?.title?.ifBlank { null } ?: file.cleanTitle(),
+            author = epubMetadata?.author?.ifBlank { null },
             format = format,
             path = file.absolutePath,
             fileName = file.name,
@@ -27,4 +32,14 @@ class BookFileMetadataReader @Inject constructor(
             "epub" -> BookFormatEntity.Epub
             else -> null
         }
+
+    private fun File.cleanTitle(): String =
+        nameWithoutExtension
+            .replace(Regex("""[\._]+"""), " ")
+            .replace(Regex("""\s*[-–—]\s*"""), " - ")
+            .replace(Regex("""\[[^\]]*]|\([^)]*\)"""), " ")
+            .replace(Regex("""\b(epub|pdf|ebook|scan|retail|spanish|espanol|english)\b""", RegexOption.IGNORE_CASE), " ")
+            .replace(Regex("""\s+"""), " ")
+            .trim(' ', '-', '_')
+            .ifBlank { nameWithoutExtension.ifBlank { name } }
 }

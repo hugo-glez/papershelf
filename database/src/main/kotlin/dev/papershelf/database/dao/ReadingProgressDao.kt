@@ -13,4 +13,7 @@ interface ReadingProgressDao {
 
     @Upsert
     suspend fun upsertProgress(progress: ReadingProgressEntity)
+
+    @Query("DELETE FROM reading_progress")
+    suspend fun deleteAllProgress()
 }

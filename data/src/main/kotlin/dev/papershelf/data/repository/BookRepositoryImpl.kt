@@ -13,4 +13,8 @@ class BookRepositoryImpl @Inject constructor(
 ) : BookRepository {
     override fun observeBooks(): Flow<List<Book>> =
         bookDao.observeBooks().map { books -> books.map { it.toDomain() } }
+
+    override suspend fun updateFavorite(bookId: Long, isFavorite: Boolean) {
+        bookDao.updateFavorite(bookId = bookId, isFavorite = isFavorite)
+    }
 }

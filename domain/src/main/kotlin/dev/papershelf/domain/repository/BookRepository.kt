@@ -5,4 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface BookRepository {
     fun observeBooks(): Flow<List<Book>>
+
+    suspend fun updateFavorite(bookId: Long, isFavorite: Boolean)
 }

@@ -8,15 +8,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +45,7 @@ fun SettingsRoute(
         onThemeChange = viewModel::updateThemeMode,
         onAnimationsChange = viewModel::updateAnimationsEnabled,
         onThumbnailSizeChange = viewModel::updateThumbnailSizeDp,
+        onClearLibraryData = viewModel::clearLibraryData,
     )
 }
 
@@ -48,7 +56,10 @@ fun SettingsScreen(
     onThemeChange: (ThemeMode) -> Unit,
     onAnimationsChange: (Boolean) -> Unit,
     onThumbnailSizeChange: (Int) -> Unit,
+    onClearLibraryData: () -> Unit,
 ) {
+    var showClearConfirmation by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -145,6 +156,52 @@ fun SettingsScreen(
                 )
             }
         }
+
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = "Datos locales",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = "Borra libros indexados, progreso, marcadores y etiquetas. La carpeta configurada se conserva.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedButton(onClick = { showClearConfirmation = true }) {
+                    Text("Eliminar base de datos")
+                }
+            }
+        }
+    }
+
+    if (showClearConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirmation = false },
+            title = { Text("Eliminar biblioteca local") },
+            text = {
+                Text("Se borraran libros indexados, progreso, marcadores y etiquetas. Despues tendras que escanear la biblioteca completa otra vez.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showClearConfirmation = false
+                        onClearLibraryData()
+                    },
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirmation = false }) {
+                    Text("Cancelar")
+                }
+            },
+        )
     }
 }
 

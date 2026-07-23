@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.papershelf.domain.model.Book
 import dev.papershelf.domain.model.BookFormat
+import dev.papershelf.domain.model.BookTag
 import dev.papershelf.domain.repository.BookRepository
 import dev.papershelf.domain.repository.SettingsRepository
+import dev.papershelf.domain.repository.TagRepository
 import dev.papershelf.domain.scanner.LibraryScanResult
 import dev.papershelf.domain.scanner.LibraryScanner
 import javax.inject.Inject
@@ -21,29 +23,46 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
-    bookRepository: BookRepository,
+    private val bookRepository: BookRepository,
     private val libraryScanner: LibraryScanner,
     private val settingsRepository: SettingsRepository,
+    private val tagRepository: TagRepository,
 ) : ViewModel() {
     private val controls = MutableStateFlow(LibraryControls())
     private val scanState = MutableStateFlow(LibraryScanState())
+    private val libraryData =
+        combine(
+            bookRepository.observeBooks(),
+            tagRepository.observeTags(),
+            tagRepository.observeBookTags(),
+        ) { books, tags, bookTags ->
+            LibraryData(
+                books = books,
+                tags = tags,
+                bookTags = bookTags,
+            )
+        }
 
     val uiState: StateFlow<LibraryUiState> =
         combine(
-            bookRepository.observeBooks(),
+            libraryData,
             settingsRepository.observeSettings(),
             controls,
             scanState,
-        ) { books, settings, controls, scanState ->
+        ) { libraryData, settings, controls, scanState ->
             LibraryUiState(
-                books = books.toVisibleBooks(controls),
-                totalBooks = books.size,
-                pdfBooks = books.count { it.format == BookFormat.Pdf },
-                epubBooks = books.count { it.format == BookFormat.Epub },
+                books = libraryData.books.toVisibleBooks(controls, libraryData.bookTags),
+                tags = libraryData.tags,
+                bookTags = libraryData.bookTags,
+                totalBooks = libraryData.books.size,
+                pdfBooks = libraryData.books.count { it.format == BookFormat.Pdf },
+                epubBooks = libraryData.books.count { it.format == BookFormat.Epub },
                 booksFolderPath = settings.booksFolderPath,
                 query = controls.query,
                 filter = controls.filter,
+                selectedTagId = controls.selectedTagId,
                 sort = controls.sort,
+                newTagName = controls.newTagName,
                 isScanning = scanState.isScanning,
                 lastScanResult = scanState.lastScanResult,
                 scanError = scanState.errorMessage,
@@ -66,6 +85,47 @@ class LibraryViewModel @Inject constructor(
         controls.update { it.copy(sort = sort) }
     }
 
+    fun onTagFilterChange(tagId: Long?) {
+        controls.update { it.copy(selectedTagId = tagId) }
+    }
+
+    fun onNewTagNameChange(name: String) {
+        controls.update { it.copy(newTagName = name) }
+    }
+
+    fun createTag() {
+        val name = controls.value.newTagName
+        viewModelScope.launch {
+            runCatching { tagRepository.createTag(name) }
+                .onSuccess {
+                    controls.update { it.copy(newTagName = "") }
+                }
+        }
+    }
+
+    fun toggleBookTag(
+        bookId: Long,
+        tag: BookTag,
+        selected: Boolean,
+    ) {
+        viewModelScope.launch {
+            if (selected) {
+                tagRepository.removeTagFromBook(bookId = bookId, tagId = tag.id)
+            } else {
+                tagRepository.addTagToBook(bookId = bookId, tagId = tag.id)
+            }
+        }
+    }
+
+    fun toggleFavorite(book: Book) {
+        viewModelScope.launch {
+            bookRepository.updateFavorite(
+                bookId = book.id,
+                isFavorite = !book.isFavorite,
+            )
+        }
+    }
+
     fun scanLibrary() {
         if (scanState.value.isScanning) return
 
@@ -86,10 +146,17 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    private fun List<Book>.toVisibleBooks(controls: LibraryControls): List<Book> {
+    private fun List<Book>.toVisibleBooks(
+        controls: LibraryControls,
+        bookTags: Map<Long, List<BookTag>>,
+    ): List<Book> {
         val normalizedQuery = controls.query.trim().lowercase()
         return asSequence()
             .filter { book -> book.matchesFilter(controls.filter) }
+            .filter { book ->
+                controls.selectedTagId == null ||
+                    bookTags[book.id].orEmpty().any { tag -> tag.id == controls.selectedTagId }
+            }
             .filter { book ->
                 normalizedQuery.isEmpty() ||
                     book.title.contains(normalizedQuery, ignoreCase = true) ||
@@ -116,13 +183,17 @@ class LibraryViewModel @Inject constructor(
 
 data class LibraryUiState(
     val books: List<Book> = emptyList(),
+    val tags: List<BookTag> = emptyList(),
+    val bookTags: Map<Long, List<BookTag>> = emptyMap(),
     val totalBooks: Int = 0,
     val pdfBooks: Int = 0,
     val epubBooks: Int = 0,
     val booksFolderPath: String = "",
     val query: String = "",
     val filter: LibraryFilter = LibraryFilter.All,
+    val selectedTagId: Long? = null,
     val sort: LibrarySort = LibrarySort.Title,
+    val newTagName: String = "",
     val isScanning: Boolean = false,
     val lastScanResult: LibraryScanResult? = null,
     val scanError: String? = null,
@@ -158,7 +229,15 @@ enum class LibrarySort(
 private data class LibraryControls(
     val query: String = "",
     val filter: LibraryFilter = LibraryFilter.All,
+    val selectedTagId: Long? = null,
     val sort: LibrarySort = LibrarySort.Title,
+    val newTagName: String = "",
+)
+
+private data class LibraryData(
+    val books: List<Book>,
+    val tags: List<BookTag>,
+    val bookTags: Map<Long, List<BookTag>>,
 )
 
 private data class LibraryScanState(

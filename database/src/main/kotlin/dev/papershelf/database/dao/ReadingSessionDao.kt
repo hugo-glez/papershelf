@@ -14,4 +14,7 @@ interface ReadingSessionDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSession(session: ReadingSessionEntity): Long
+
+    @Query("DELETE FROM reading_sessions")
+    suspend fun deleteAllSessions()
 }

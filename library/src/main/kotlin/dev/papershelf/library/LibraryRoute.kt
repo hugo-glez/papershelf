@@ -31,6 +31,8 @@ import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Label
+import androidx.compose.material.icons.outlined.LocalOffer
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
@@ -72,6 +75,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.papershelf.domain.model.Book
 import dev.papershelf.domain.model.BookFormat
+import dev.papershelf.domain.model.BookTag
 import java.text.DateFormat
 import java.util.Date
 
@@ -104,6 +108,11 @@ fun LibraryRoute(
         onQueryChange = viewModel::onQueryChange,
         onFilterChange = viewModel::onFilterChange,
         onSortChange = viewModel::onSortChange,
+        onTagFilterChange = viewModel::onTagFilterChange,
+        onNewTagNameChange = viewModel::onNewTagNameChange,
+        onCreateTag = viewModel::createTag,
+        onToggleBookTag = viewModel::toggleBookTag,
+        onToggleFavorite = viewModel::toggleFavorite,
         onScanClick = scanWithPermission,
         onOpenBook = onOpenBook,
     )
@@ -116,6 +125,11 @@ fun LibraryScreen(
     onQueryChange: (String) -> Unit,
     onFilterChange: (LibraryFilter) -> Unit,
     onSortChange: (LibrarySort) -> Unit,
+    onTagFilterChange: (Long?) -> Unit,
+    onNewTagNameChange: (String) -> Unit,
+    onCreateTag: () -> Unit,
+    onToggleBookTag: (Long, BookTag, Boolean) -> Unit,
+    onToggleFavorite: (Book) -> Unit,
     onScanClick: () -> Unit,
     onOpenBook: (Book) -> Unit,
 ) {
@@ -139,6 +153,9 @@ fun LibraryScreen(
                 onQueryChange = onQueryChange,
                 onFilterChange = onFilterChange,
                 onSortChange = onSortChange,
+                onTagFilterChange = onTagFilterChange,
+                onNewTagNameChange = onNewTagNameChange,
+                onCreateTag = onCreateTag,
             )
 
             ScanMessage(uiState)
@@ -154,6 +171,10 @@ fun LibraryScreen(
             } else {
                 BookList(
                     books = uiState.books,
+                    allTags = uiState.tags,
+                    bookTags = uiState.bookTags,
+                    onToggleBookTag = onToggleBookTag,
+                    onToggleFavorite = onToggleFavorite,
                     onOpenBook = onOpenBook,
                     modifier = Modifier.weight(1f),
                 )
@@ -222,6 +243,9 @@ private fun LibraryControls(
     onQueryChange: (String) -> Unit,
     onFilterChange: (LibraryFilter) -> Unit,
     onSortChange: (LibrarySort) -> Unit,
+    onTagFilterChange: (Long?) -> Unit,
+    onNewTagNameChange: (String) -> Unit,
+    onCreateTag: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
@@ -260,6 +284,60 @@ private fun LibraryControls(
                     onClick = { onFilterChange(filter) },
                     label = { Text(filter.label) },
                 )
+            }
+        }
+
+        if (uiState.tags.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = uiState.selectedTagId == null,
+                    onClick = { onTagFilterChange(null) },
+                    label = { Text("Todas las etiquetas") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Label,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    },
+                )
+                uiState.tags.forEach { tag ->
+                    FilterChip(
+                        selected = uiState.selectedTagId == tag.id,
+                        onClick = { onTagFilterChange(tag.id) },
+                        label = { Text(tag.name) },
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            OutlinedTextField(
+                value = uiState.newTagName,
+                onValueChange = onNewTagNameChange,
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.LocalOffer,
+                        contentDescription = null,
+                    )
+                },
+                placeholder = { Text("Nueva etiqueta o coleccion") },
+            )
+            Button(
+                enabled = uiState.newTagName.isNotBlank(),
+                onClick = onCreateTag,
+            ) {
+                Text("Agregar")
             }
         }
     }
@@ -363,6 +441,10 @@ private fun StatusRow(
 @Composable
 private fun BookList(
     books: List<Book>,
+    allTags: List<BookTag>,
+    bookTags: Map<Long, List<BookTag>>,
+    onToggleBookTag: (Long, BookTag, Boolean) -> Unit,
+    onToggleFavorite: (Book) -> Unit,
     onOpenBook: (Book) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -376,6 +458,10 @@ private fun BookList(
         ) { book ->
             BookRow(
                 book = book,
+                allTags = allTags,
+                tags = bookTags[book.id].orEmpty(),
+                onToggleTag = { tag, selected -> onToggleBookTag(book.id, tag, selected) },
+                onToggleFavorite = { onToggleFavorite(book) },
                 onOpenBook = onOpenBook,
             )
         }
@@ -385,6 +471,10 @@ private fun BookList(
 @Composable
 private fun BookRow(
     book: Book,
+    allTags: List<BookTag>,
+    tags: List<BookTag>,
+    onToggleTag: (BookTag, Boolean) -> Unit,
+    onToggleFavorite: () -> Unit,
     onOpenBook: (Book) -> Unit,
 ) {
     ElevatedCard(
@@ -426,12 +516,18 @@ private fun BookRow(
                         overflow = TextOverflow.Ellipsis,
                     )
 
-                    if (book.isFavorite) {
+                    TooltipIconButton(
+                        tooltip = if (book.isFavorite) "Quitar de favoritos" else "Agregar a favoritos",
+                        onClick = onToggleFavorite,
+                    ) {
                         Icon(
                             imageVector = Icons.Outlined.Star,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = if (book.isFavorite) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                         )
                     }
 
@@ -443,6 +539,12 @@ private fun BookRow(
                             tint = MaterialTheme.colorScheme.error,
                         )
                     }
+
+                    BookTagMenu(
+                        allTags = allTags,
+                        selectedTags = tags,
+                        onToggleTag = onToggleTag,
+                    )
                 }
 
                 Text(
@@ -479,6 +581,28 @@ private fun BookRow(
                     )
                 }
 
+                if (tags.isNotEmpty()) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        tags.forEach { tag ->
+                            AssistChip(
+                                onClick = {},
+                                label = { Text(tag.name) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Label,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+
                 LinearProgressIndicator(
                     progress = { book.progressPercent.coerceIn(0f, 100f) / 100f },
                     modifier = Modifier
@@ -486,6 +610,54 @@ private fun BookRow(
                         .height(4.dp)
                         .clip(RoundedCornerShape(4.dp)),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BookTagMenu(
+    allTags: List<BookTag>,
+    selectedTags: List<BookTag>,
+    onToggleTag: (BookTag, Boolean) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedIds = selectedTags.mapTo(mutableSetOf()) { it.id }
+
+    Box {
+        TooltipIconButton(
+            tooltip = "Etiquetas",
+            onClick = { expanded = true },
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.LocalOffer,
+                contentDescription = null,
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            if (allTags.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("Crea una etiqueta primero") },
+                    onClick = { expanded = false },
+                )
+            } else {
+                allTags.forEach { tag ->
+                    val selected = tag.id in selectedIds
+                    DropdownMenuItem(
+                        text = { Text(tag.name) },
+                        leadingIcon = {
+                            Checkbox(
+                                checked = selected,
+                                onCheckedChange = null,
+                            )
+                        },
+                        onClick = { onToggleTag(tag, selected) },
+                    )
+                }
             }
         }
     }

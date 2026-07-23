@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.papershelf.domain.model.AppSettings
 import dev.papershelf.domain.model.ThemeMode
+import dev.papershelf.domain.repository.LibraryMaintenanceRepository
 import dev.papershelf.domain.repository.SettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    private val libraryMaintenanceRepository: LibraryMaintenanceRepository,
 ) : ViewModel() {
     val uiState: StateFlow<AppSettings> =
         settingsRepository.observeSettings()
@@ -38,5 +40,9 @@ class SettingsViewModel @Inject constructor(
 
     fun updateThumbnailSizeDp(sizeDp: Int) {
         viewModelScope.launch { settingsRepository.updateThumbnailSizeDp(sizeDp) }
+    }
+
+    fun clearLibraryData() {
+        viewModelScope.launch { libraryMaintenanceRepository.clearLibraryData() }
     }
 }
