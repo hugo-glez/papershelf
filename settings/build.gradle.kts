@@ -28,7 +28,11 @@ dependencies {
     implementation(project(":domain"))
 
     implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
     implementation(libs.compose.runtime)
     implementation(libs.hilt.android)

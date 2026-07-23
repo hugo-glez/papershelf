@@ -7,10 +7,12 @@ import dagger.hilt.components.SingletonComponent
 import dev.papershelf.data.repository.BookRepositoryImpl
 import dev.papershelf.data.repository.BookmarkRepositoryImpl
 import dev.papershelf.data.repository.ReadingProgressRepositoryImpl
+import dev.papershelf.data.repository.SettingsRepositoryImpl
 import dev.papershelf.data.scanner.FileSystemLibraryScanner
 import dev.papershelf.domain.repository.BookRepository
 import dev.papershelf.domain.repository.BookmarkRepository
 import dev.papershelf.domain.repository.ReadingProgressRepository
+import dev.papershelf.domain.repository.SettingsRepository
 import dev.papershelf.domain.scanner.LibraryScanner
 import javax.inject.Singleton
 
@@ -30,6 +32,10 @@ abstract class DataModule {
     abstract fun bindReadingProgressRepository(
         implementation: ReadingProgressRepositoryImpl,
     ): ReadingProgressRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSettingsRepository(implementation: SettingsRepositoryImpl): SettingsRepository
 
     @Binds
     @Singleton
