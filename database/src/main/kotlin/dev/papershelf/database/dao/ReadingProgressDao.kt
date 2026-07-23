@@ -2,6 +2,7 @@ package dev.papershelf.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Upsert
 import dev.papershelf.database.entity.ReadingProgressEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -9,4 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface ReadingProgressDao {
     @Query("SELECT * FROM reading_progress WHERE bookId = :bookId")
     fun observeProgress(bookId: Long): Flow<ReadingProgressEntity?>
+
+    @Upsert
+    suspend fun upsertProgress(progress: ReadingProgressEntity)
 }
