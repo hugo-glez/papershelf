@@ -1,6 +1,7 @@
 package dev.papershelf.library
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +24,9 @@ import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FolderOpen
-import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -68,6 +67,7 @@ import java.util.Date
 
 @Composable
 fun LibraryRoute(
+    onOpenBook: (Book) -> Unit,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -78,6 +78,7 @@ fun LibraryRoute(
         onFilterChange = viewModel::onFilterChange,
         onSortChange = viewModel::onSortChange,
         onScanClick = viewModel::scanLibrary,
+        onOpenBook = onOpenBook,
     )
 }
 
@@ -89,6 +90,7 @@ fun LibraryScreen(
     onFilterChange: (LibraryFilter) -> Unit,
     onSortChange: (LibrarySort) -> Unit,
     onScanClick: () -> Unit,
+    onOpenBook: (Book) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -124,6 +126,7 @@ fun LibraryScreen(
             } else {
                 BookList(
                     books = uiState.books,
+                    onOpenBook = onOpenBook,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -325,6 +328,7 @@ private fun StatusRow(
 @Composable
 private fun BookList(
     books: List<Book>,
+    onOpenBook: (Book) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -335,15 +339,26 @@ private fun BookList(
             items = books,
             key = { it.id },
         ) { book ->
-            BookRow(book)
+            BookRow(
+                book = book,
+                onOpenBook = onOpenBook,
+            )
         }
     }
 }
 
 @Composable
-private fun BookRow(book: Book) {
+private fun BookRow(
+    book: Book,
+    onOpenBook: (Book) -> Unit,
+) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                enabled = book.isAvailable && book.format == BookFormat.Pdf,
+                onClick = { onOpenBook(book) },
+            ),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surface,

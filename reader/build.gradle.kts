@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":domain"))
 
     implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
