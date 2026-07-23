@@ -64,6 +64,7 @@ fun PaperShelfRoot() {
                             BookFormat.Epub -> epubReaderLauncher.open(
                                 bookId = book.id,
                                 path = book.path,
+                                pageCount = book.pageCount,
                             )
                         }
                     },

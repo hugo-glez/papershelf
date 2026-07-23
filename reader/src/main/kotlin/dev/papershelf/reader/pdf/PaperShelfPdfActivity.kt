@@ -6,6 +6,8 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.artifex.mupdf.fitz.Document
+import com.artifex.mupdf.fitz.Location
 import com.artifex.mupdf.viewer.DocumentActivity
 import com.artifex.mupdf.viewer.MuPDFCore
 import com.artifex.mupdf.viewer.ReaderView
@@ -30,6 +32,8 @@ class PaperShelfPdfActivity : DocumentActivity() {
         get() = intent.getLongExtra(EXTRA_BOOK_ID, 0L)
     private val pageCount: Int
         get() = intent.getIntExtra(EXTRA_PAGE_COUNT, 0)
+    private val documentFormat: String
+        get() = intent.getStringExtra(EXTRA_DOCUMENT_FORMAT) ?: FORMAT_PDF
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val entryPoint = EntryPointAccessors.fromApplication(
@@ -101,7 +105,7 @@ class PaperShelfPdfActivity : DocumentActivity() {
             readingProgressRepository.saveProgress(
                 bookId = bookId,
                 lastPage = currentPage,
-                chapter = null,
+                chapter = currentLocation()?.toProgressChapter(),
                 percentRead = percent,
                 pageCount = knownPageCount,
             )
@@ -122,18 +126,46 @@ class PaperShelfPdfActivity : DocumentActivity() {
     private fun currentPageCount(): Int {
         pageCount.takeIf { it > 0 }?.let { return it }
 
+        val core = currentCore() ?: return 0
+        return runCatching { core.countPages() }.getOrDefault(0)
+    }
+
+    private fun currentLocation(): Location? {
+        if (documentFormat != FORMAT_EPUB) return null
+
+        val currentPage = currentPage() ?: return null
+        val document = currentDocument() ?: return null
+        return runCatching { document.locationFromPageNumber(currentPage) }.getOrNull()
+    }
+
+    private fun currentCore(): MuPDFCore? {
         val coreField = runCatching {
             DocumentActivity::class.java.getDeclaredField("core").apply {
                 isAccessible = true
             }
-        }.getOrNull() ?: return 0
+        }.getOrNull() ?: return null
 
-        val core = coreField.get(this) as? MuPDFCore ?: return 0
-        return runCatching { core.countPages() }.getOrDefault(0)
+        return coreField.get(this) as? MuPDFCore
+    }
+
+    private fun currentDocument(): Document? {
+        val core = currentCore() ?: return null
+        val documentField = runCatching {
+            MuPDFCore::class.java.getDeclaredField("doc").apply {
+                isAccessible = true
+            }
+        }.getOrNull() ?: return null
+
+        return documentField.get(core) as? Document
     }
 
     companion object {
         const val EXTRA_BOOK_ID = "dev.papershelf.reader.pdf.EXTRA_BOOK_ID"
         const val EXTRA_PAGE_COUNT = "dev.papershelf.reader.pdf.EXTRA_PAGE_COUNT"
+        const val EXTRA_DOCUMENT_FORMAT = "dev.papershelf.reader.pdf.EXTRA_DOCUMENT_FORMAT"
+        const val FORMAT_PDF = "pdf"
+        const val FORMAT_EPUB = "epub"
     }
 }
+
+private fun Location.toProgressChapter(): String = "$chapter:$page"

@@ -14,6 +14,7 @@ class EpubReaderLauncher(
     fun open(
         bookId: Long,
         path: String,
+        pageCount: Int?,
     ) {
         val file = File(path)
         if (!file.exists()) {
@@ -31,7 +32,8 @@ class EpubReaderLauncher(
             .setClass(context, PaperShelfPdfActivity::class.java)
             .setDataAndType(uri, "application/epub+zip")
             .putExtra(PaperShelfPdfActivity.EXTRA_BOOK_ID, bookId)
-            .putExtra(PaperShelfPdfActivity.EXTRA_PAGE_COUNT, 0)
+            .putExtra(PaperShelfPdfActivity.EXTRA_PAGE_COUNT, pageCount ?: 0)
+            .putExtra(PaperShelfPdfActivity.EXTRA_DOCUMENT_FORMAT, PaperShelfPdfActivity.FORMAT_EPUB)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         try {

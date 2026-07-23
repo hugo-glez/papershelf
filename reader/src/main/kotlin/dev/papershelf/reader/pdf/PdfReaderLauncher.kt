@@ -32,6 +32,7 @@ class PdfReaderLauncher(
             .setDataAndType(uri, "application/pdf")
             .putExtra(PaperShelfPdfActivity.EXTRA_BOOK_ID, bookId)
             .putExtra(PaperShelfPdfActivity.EXTRA_PAGE_COUNT, pageCount ?: 0)
+            .putExtra(PaperShelfPdfActivity.EXTRA_DOCUMENT_FORMAT, PaperShelfPdfActivity.FORMAT_PDF)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         try {
