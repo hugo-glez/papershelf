@@ -6,4 +6,5 @@ data class Bookmark(
     val page: Int?,
     val chapter: String?,
     val note: String?,
+    val createdEpochMillis: Long,
 )

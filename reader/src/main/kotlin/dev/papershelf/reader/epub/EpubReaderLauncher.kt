@@ -9,7 +9,10 @@ import java.io.File
 class EpubReaderLauncher(
     private val context: Context,
 ) {
-    fun open(path: String) {
+    fun open(
+        bookId: Long,
+        path: String,
+    ) {
         val file = File(path)
         if (!file.exists()) {
             Toast.makeText(context, "El archivo no esta disponible", Toast.LENGTH_SHORT).show()
@@ -17,6 +20,7 @@ class EpubReaderLauncher(
         }
 
         val intent = Intent(context, EpubReaderActivity::class.java)
+            .putExtra(EpubReaderActivity.EXTRA_BOOK_ID, bookId)
             .putExtra(EpubReaderActivity.EXTRA_PATH, path)
 
         try {

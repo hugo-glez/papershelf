@@ -14,8 +14,15 @@ fun PaperShelfRoot() {
     LibraryRoute(
         onOpenBook = { book ->
             when (book.format) {
-                BookFormat.Pdf -> pdfReaderLauncher.open(book.path)
-                BookFormat.Epub -> epubReaderLauncher.open(book.path)
+                BookFormat.Pdf -> pdfReaderLauncher.open(
+                    bookId = book.id,
+                    path = book.path,
+                    pageCount = book.pageCount,
+                )
+                BookFormat.Epub -> epubReaderLauncher.open(
+                    bookId = book.id,
+                    path = book.path,
+                )
             }
         },
     )

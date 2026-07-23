@@ -5,13 +5,16 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import com.artifex.mupdf.viewer.DocumentActivity
 import java.io.File
 
 class PdfReaderLauncher(
     private val context: Context,
 ) {
-    fun open(path: String) {
+    fun open(
+        bookId: Long,
+        path: String,
+        pageCount: Int?,
+    ) {
         val file = File(path)
         if (!file.exists()) {
             Toast.makeText(context, "El archivo no esta disponible", Toast.LENGTH_SHORT).show()
@@ -25,8 +28,10 @@ class PdfReaderLauncher(
         )
 
         val intent = Intent(Intent.ACTION_VIEW)
-            .setClass(context, DocumentActivity::class.java)
+            .setClass(context, PaperShelfPdfActivity::class.java)
             .setDataAndType(uri, "application/pdf")
+            .putExtra(PaperShelfPdfActivity.EXTRA_BOOK_ID, bookId)
+            .putExtra(PaperShelfPdfActivity.EXTRA_PAGE_COUNT, pageCount ?: 0)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         try {

@@ -36,4 +36,18 @@ interface BookDao {
 
     @Query("SELECT COUNT(*) FROM books")
     suspend fun countBooks(): Int
+
+    @Query(
+        """
+        UPDATE books
+        SET progressPercent = :progressPercent,
+            lastReadEpochMillis = :lastReadEpochMillis
+        WHERE id = :bookId
+        """,
+    )
+    suspend fun updateReadingSummary(
+        bookId: Long,
+        progressPercent: Float,
+        lastReadEpochMillis: Long,
+    )
 }
