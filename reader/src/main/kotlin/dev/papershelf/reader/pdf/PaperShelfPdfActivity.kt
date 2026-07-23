@@ -7,6 +7,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.artifex.mupdf.viewer.DocumentActivity
+import com.artifex.mupdf.viewer.MuPDFCore
 import com.artifex.mupdf.viewer.ReaderView
 import dagger.hilt.android.EntryPointAccessors
 import dev.papershelf.domain.progress.ReadingProgressCalculator
@@ -24,6 +25,7 @@ class PaperShelfPdfActivity : DocumentActivity() {
     private lateinit var bookmarkRepository: BookmarkRepository
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val progressScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val bookId: Long
         get() = intent.getLongExtra(EXTRA_BOOK_ID, 0L)
     private val pageCount: Int
@@ -92,14 +94,16 @@ class PaperShelfPdfActivity : DocumentActivity() {
         val currentPage = currentPage()
         if (bookId <= 0 || currentPage == null) return
 
-        val percent = ReadingProgressCalculator.fromPage(currentPage, pageCount)
+        val knownPageCount = currentPageCount()
+        val percent = ReadingProgressCalculator.fromPage(currentPage, knownPageCount)
 
-        scope.launch {
+        progressScope.launch {
             readingProgressRepository.saveProgress(
                 bookId = bookId,
                 lastPage = currentPage,
                 chapter = null,
                 percentRead = percent,
+                pageCount = knownPageCount,
             )
         }
     }
@@ -113,6 +117,19 @@ class PaperShelfPdfActivity : DocumentActivity() {
 
         val readerView = field.get(this) as? ReaderView ?: return null
         return readerView.getDisplayedViewIndex()
+    }
+
+    private fun currentPageCount(): Int {
+        pageCount.takeIf { it > 0 }?.let { return it }
+
+        val coreField = runCatching {
+            DocumentActivity::class.java.getDeclaredField("core").apply {
+                isAccessible = true
+            }
+        }.getOrNull() ?: return 0
+
+        val core = coreField.get(this) as? MuPDFCore ?: return 0
+        return runCatching { core.countPages() }.getOrDefault(0)
     }
 
     companion object {

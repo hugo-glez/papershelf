@@ -47,7 +47,8 @@ interface BookDao {
         """
         UPDATE books
         SET progressPercent = :progressPercent,
-            lastReadEpochMillis = :lastReadEpochMillis
+            lastReadEpochMillis = :lastReadEpochMillis,
+            pageCount = COALESCE(:pageCount, pageCount)
         WHERE id = :bookId
         """,
     )
@@ -55,5 +56,6 @@ interface BookDao {
         bookId: Long,
         progressPercent: Float,
         lastReadEpochMillis: Long,
+        pageCount: Int?,
     )
 }

@@ -12,5 +12,6 @@ interface ReadingProgressRepository {
         chapter: String?,
         percentRead: Float,
         readingTimeMillis: Long = 0,
+        pageCount: Int? = null,
     )
 }

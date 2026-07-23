@@ -27,9 +27,11 @@ class ReadingProgressRepositoryImpl @Inject constructor(
         chapter: String?,
         percentRead: Float,
         readingTimeMillis: Long,
+        pageCount: Int?,
     ) {
         val now = System.currentTimeMillis()
         val boundedPercent = ReadingProgressCalculator.bound(percentRead)
+        val knownPageCount = pageCount?.takeIf { it > 0 }
         database.withTransaction {
             readingProgressDao.upsertProgress(
                 ReadingProgressEntity(
@@ -45,6 +47,7 @@ class ReadingProgressRepositoryImpl @Inject constructor(
                 bookId = bookId,
                 progressPercent = boundedPercent,
                 lastReadEpochMillis = now,
+                pageCount = knownPageCount,
             )
         }
     }
