@@ -10,7 +10,7 @@ PaperShelf is an offline-first Android app organized as a small Clean Architectu
 - `database`: Room database, entities, DAOs, converters, and schema exports.
 - `data`: repository implementations, file scanning, metadata extraction, and cache coordination.
 - `library`: library, home, favorites, statistics, and book info UI.
-- `reader`: PDF and EPUB reader UI/adapters around MuPDF and Readium.
+- `reader`: PDF reader UI around MuPDF and EPUB handoff through Android intents.
 - `settings`: settings UI and settings state.
 
 ## Dependency Direction
