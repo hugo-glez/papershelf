@@ -4,7 +4,9 @@ import dev.papershelf.database.entity.BookFormatEntity
 import java.io.File
 import javax.inject.Inject
 
-class BookFileMetadataReader @Inject constructor() {
+class BookFileMetadataReader @Inject constructor(
+    private val thumbnailGenerator: ThumbnailGenerator,
+) {
     fun read(file: File): ScannedBookFile? {
         val format = file.bookFormat() ?: return null
         return ScannedBookFile(
@@ -14,6 +16,7 @@ class BookFileMetadataReader @Inject constructor() {
             path = file.absolutePath,
             fileName = file.name,
             fileSizeBytes = file.length(),
+            thumbnailPath = thumbnailGenerator.thumbnailFor(file, format),
             lastModifiedEpochMillis = file.lastModified(),
         )
     }

@@ -10,7 +10,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        minSdk = 30
+        minSdk = 24
     }
 
     compileOptions {
@@ -38,8 +38,5 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.hilt.android)
     implementation(libs.mupdf.viewer)
-    implementation(libs.readium.navigator)
-    implementation(libs.readium.shared)
-    implementation(libs.readium.streamer)
     ksp(libs.hilt.compiler)
 }

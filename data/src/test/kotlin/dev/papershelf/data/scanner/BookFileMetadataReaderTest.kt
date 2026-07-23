@@ -8,7 +8,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BookFileMetadataReaderTest {
-    private val reader = BookFileMetadataReader()
+    private val reader = BookFileMetadataReader(
+        object : ThumbnailGenerator {
+            override fun thumbnailFor(
+                file: File,
+                format: BookFormatEntity,
+            ): String? = null
+        },
+    )
 
     @Test
     fun `read extracts pdf metadata case insensitively`() {

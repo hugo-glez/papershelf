@@ -88,7 +88,7 @@ class FileSystemLibraryScanner @Inject constructor(
             fileName = fileName,
             fileSizeBytes = fileSizeBytes,
             pageCount = null,
-            thumbnailPath = null,
+            thumbnailPath = thumbnailPath,
             lastModifiedEpochMillis = lastModifiedEpochMillis,
             dateAddedEpochMillis = scannedAt,
             lastScannedEpochMillis = scannedAt,
@@ -108,6 +108,7 @@ class FileSystemLibraryScanner @Inject constructor(
             format = scannedFile.format,
             fileName = scannedFile.fileName,
             fileSizeBytes = scannedFile.fileSizeBytes,
+            thumbnailPath = scannedFile.thumbnailPath ?: thumbnailPath,
             lastModifiedEpochMillis = scannedFile.lastModifiedEpochMillis,
             lastScannedEpochMillis = scannedAt,
             isAvailable = true,
@@ -120,6 +121,7 @@ class FileSystemLibraryScanner @Inject constructor(
             format != scannedFile.format ||
             fileName != scannedFile.fileName ||
             fileSizeBytes != scannedFile.fileSizeBytes ||
+            thumbnailPath != scannedFile.thumbnailPath && scannedFile.thumbnailPath != null ||
             lastModifiedEpochMillis != scannedFile.lastModifiedEpochMillis
 
     private fun String.isUnder(root: File): Boolean {

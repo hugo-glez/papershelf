@@ -9,6 +9,8 @@ import dev.papershelf.data.repository.BookmarkRepositoryImpl
 import dev.papershelf.data.repository.ReadingProgressRepositoryImpl
 import dev.papershelf.data.repository.SettingsRepositoryImpl
 import dev.papershelf.data.scanner.FileSystemLibraryScanner
+import dev.papershelf.data.scanner.BookThumbnailGenerator
+import dev.papershelf.data.scanner.ThumbnailGenerator
 import dev.papershelf.domain.repository.BookRepository
 import dev.papershelf.domain.repository.BookmarkRepository
 import dev.papershelf.domain.repository.ReadingProgressRepository
@@ -40,4 +42,8 @@ abstract class DataModule {
     @Binds
     @Singleton
     abstract fun bindLibraryScanner(implementation: FileSystemLibraryScanner): LibraryScanner
+
+    @Binds
+    @Singleton
+    abstract fun bindThumbnailGenerator(implementation: BookThumbnailGenerator): ThumbnailGenerator
 }

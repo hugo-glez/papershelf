@@ -9,5 +9,6 @@ data class ScannedBookFile(
     val path: String,
     val fileName: String,
     val fileSizeBytes: Long,
+    val thumbnailPath: String?,
     val lastModifiedEpochMillis: Long,
 )

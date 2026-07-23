@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.core.content.FileProvider
+import dev.papershelf.reader.pdf.PaperShelfPdfActivity
 import java.io.File
 
 class EpubReaderLauncher(
@@ -19,9 +21,18 @@ class EpubReaderLauncher(
             return
         }
 
-        val intent = Intent(context, EpubReaderActivity::class.java)
-            .putExtra(EpubReaderActivity.EXTRA_BOOK_ID, bookId)
-            .putExtra(EpubReaderActivity.EXTRA_PATH, path)
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.files",
+            file,
+        )
+
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setClass(context, PaperShelfPdfActivity::class.java)
+            .setDataAndType(uri, "application/epub+zip")
+            .putExtra(PaperShelfPdfActivity.EXTRA_BOOK_ID, bookId)
+            .putExtra(PaperShelfPdfActivity.EXTRA_PAGE_COUNT, 0)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         try {
             context.startActivity(intent)

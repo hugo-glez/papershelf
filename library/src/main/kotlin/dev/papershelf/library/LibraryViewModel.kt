@@ -31,14 +31,16 @@ class LibraryViewModel @Inject constructor(
     val uiState: StateFlow<LibraryUiState> =
         combine(
             bookRepository.observeBooks(),
+            settingsRepository.observeSettings(),
             controls,
             scanState,
-        ) { books, controls, scanState ->
+        ) { books, settings, controls, scanState ->
             LibraryUiState(
                 books = books.toVisibleBooks(controls),
                 totalBooks = books.size,
                 pdfBooks = books.count { it.format == BookFormat.Pdf },
                 epubBooks = books.count { it.format == BookFormat.Epub },
+                booksFolderPath = settings.booksFolderPath,
                 query = controls.query,
                 filter = controls.filter,
                 sort = controls.sort,
@@ -117,6 +119,7 @@ data class LibraryUiState(
     val totalBooks: Int = 0,
     val pdfBooks: Int = 0,
     val epubBooks: Int = 0,
+    val booksFolderPath: String = "",
     val query: String = "",
     val filter: LibraryFilter = LibraryFilter.All,
     val sort: LibrarySort = LibrarySort.Title,

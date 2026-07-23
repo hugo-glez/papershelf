@@ -1,5 +1,12 @@
 package dev.papershelf.library
 
+import android.graphics.BitmapFactory
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +62,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -71,13 +81,30 @@ fun LibraryRoute(
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            viewModel.scanLibrary()
+        }
+    }
+    val scanWithPermission = {
+        if (requiresStoragePermission() &&
+            context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+        ) {
+            storagePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+        } else {
+            viewModel.scanLibrary()
+        }
+    }
 
     LibraryScreen(
         uiState = uiState,
         onQueryChange = viewModel::onQueryChange,
         onFilterChange = viewModel::onFilterChange,
         onSortChange = viewModel::onSortChange,
-        onScanClick = viewModel::scanLibrary,
+        onScanClick = scanWithPermission,
         onOpenBook = onOpenBook,
     )
 }
@@ -121,6 +148,7 @@ fun LibraryScreen(
                     hasQuery = uiState.query.isNotBlank() || uiState.filter != LibraryFilter.All,
                     onScanClick = onScanClick,
                     isScanning = uiState.isScanning,
+                    booksFolderPath = uiState.booksFolderPath,
                     modifier = Modifier.weight(1f),
                 )
             } else {
@@ -161,6 +189,13 @@ private fun LibraryTopBar(
                 Text(
                     text = "${uiState.totalBooks} libros  |  ${uiState.pdfBooks} PDF  |  ${uiState.epubBooks} EPUB",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = uiState.booksFolderPath.ifBlank { "Carpeta no configurada" },
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -458,6 +493,11 @@ private fun BookRow(
 
 @Composable
 private fun BookCoverPlaceholder(book: Book) {
+    val cover = remember(book.thumbnailPath) {
+        book.thumbnailPath
+            ?.let { path -> runCatching { BitmapFactory.decodeFile(path)?.asImageBitmap() }.getOrNull() }
+    }
+
     Box(
         modifier = Modifier
             .size(width = 52.dp, height = 72.dp)
@@ -465,12 +505,21 @@ private fun BookCoverPlaceholder(book: Book) {
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = book.format.icon,
-            contentDescription = null,
-            modifier = Modifier.size(28.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (cover != null) {
+            Image(
+                bitmap = cover,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            Icon(
+                imageVector = book.format.icon,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -479,6 +528,7 @@ private fun EmptyLibraryState(
     hasQuery: Boolean,
     onScanClick: () -> Unit,
     isScanning: Boolean,
+    booksFolderPath: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -503,7 +553,7 @@ private fun EmptyLibraryState(
             text = if (hasQuery) {
                 "Ajusta la busqueda o cambia el filtro."
             } else {
-                "Escanea /storage/emulated/0/Books para indexar PDF y EPUB."
+                "Escanea ${booksFolderPath.ifBlank { "la carpeta configurada" }} para indexar PDF y EPUB."
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -573,3 +623,5 @@ private fun Long.formatBytes(): String =
         this >= 1_000 -> "%.1f KB".format(this / 1_000.0)
         else -> "$this B"
     }
+
+private fun requiresStoragePermission(): Boolean = Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2
